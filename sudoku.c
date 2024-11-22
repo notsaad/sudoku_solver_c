@@ -1,6 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 
-void solver(int board[9][9]);
+void solver(int board[9][9], int cells_left, int free_row_nums[9][10], int free_col_nums[9][10], int free_sqr_nums[9][10]);
 
 int main(){
 
@@ -45,16 +46,48 @@ int main(){
 
     board[8][2] = 6;
 
+    int cells_left = 81;
+
+    int free_row_nums[9][10];
+    int free_col_nums[9][10];
+    int free_sqr_nums[9][10];
+
+    for (int i = 0; i < 9; ++i){
+        for (int j = 0; j < 10; ++j){
+            free_row_nums[i][j] = 0;
+            free_col_nums[i][j] = 0;
+            free_sqr_nums[i][j] = 0;
+        }
+    }
 
     // printing the starting board
     for (int i = 0; i < 9; ++i){
         for (int j = 0; j < 9; ++j){
             printf("%d ", board[i][j]);
+            if (board[i][j] != 0){
+                cells_left--;
+                free_row_nums[i][board[i][j]] = 1;
+                free_col_nums[j][board[i][j]] = 1;
+
+                free_sqr_nums[ 3*(i/3) + (j/3) ][board[i][j]] = 1;
+
+            }
         }
         printf("\n");
     }
 
-    solver(board);
+    for (int i=0; i < 9; ++i){
+        printf("Valid numbers in square %d:", i+1);
+        for (int j=1; j < 10; ++j){
+            printf("%d ", free_sqr_nums[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+    printf("\n");
+
+
+    solver(board, cells_left, free_row_nums, free_col_nums, free_sqr_nums);
 
     // print the solved board
     for (int i = 0; i < 9; ++i){
@@ -67,10 +100,41 @@ int main(){
     return 0;
 }
 
-void solver(int board[9][9]){
+void solver(int board[9][9], int cells_left, int free_row_nums[9][10], int free_col_nums[9][10], int free_sqr_nums[9][10]){
 
-    for (int i = 1; i < 10; ++i){
-        printf("%d\n", i);
+    if (!cells_left){
+        puts("board solved");
+
+        return;
+    }
+
+    system("clear");
+    for (int i = 0; i < 9; ++i){
+        for (int j = 0; j < 9; ++j){
+            printf("%d ", board[i][j]);
+        }
+        printf("\n");
+    }
+
+    
+    for (int r=0; r < 9; ++r){
+        for (int c=0; c < 9; ++c){
+            // for each row try all available values
+            if (board[r][c] == 0){
+                for (int i = 1; i < 10; ++i){
+                    if ((free_row_nums[r][i] == 0) && (free_col_nums[c][i] == 0) && (free_sqr_nums[ 3*(r/3) + (c/3) ][i] == 0)){
+                        board[r][c] = i;
+                        free_row_nums[r][i] = 1;
+                        free_col_nums[c][i] = 1;
+                        //printf("%d is free in both row %d and col %d\n", i, r, c);
+                        solver(board, cells_left-1, free_row_nums, free_col_nums, free_sqr_nums);
+                        free_row_nums[r][i] = 0;
+                        free_col_nums[c][i] = 0;
+                        board[r][c] = 0;
+                    }
+                }
+            }
+        }
     }
 
     return;
